@@ -1,0 +1,108 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(nycflights13)
+library(tidyverse)
+```
+
+```{r}
+view(flights)
+view(airports)
+view(planes)
+view(airlines)
+view(weather)
+```
+```{r}
+flights %>%
+  inner_join(planes, by = "tailnum", suffix = c("_flights", "_planes"))
+```
+
+```{r}
+flights %>%
+inner_join(airlines, by = "carrier")
+```
+
+```{r}
+flights %>%
+  inner_join(airports, by = c("origin" = "faa")) %>%
+  inner_join(airports, by = c("dest" = "faa"), suffix = c("_origin","_dest"))
+```
+
+```{r}
+flights %>%
+  inner_join(weather, by = c("year","month","day","hour","origin"), suffix = c("_flights", "_weather"))
+```
+#Data Manipulation 2.1
+```{r}
+flights %>%
+  count(year,month,day) %>% #realizando el conteo
+  filter(n > 1000) %>% #filtrando datos mayores a 1000
+  arrange(n) #ordenando de forma ascendente los datos
+```
+#Data Manipulation 2.2
+```{r}
+flights_selected <- flights %>%
+  select(year:day,hour,origin,dest,tailnum,carrier,arr_delay,dep_delay) #seleccionando grupos de columnas y columnas en especifico
+
+flights_selected
+```
+
+#Data Manipulation 2.3
+```{r}
+airlines %>%
+  left_join(flights_selected, by = "carrier") %>% #uniendo tablas
+  select(-origin,-dest) #eliminando columnas
+```
+
+#Data Manipulation 2.4
+```{r}
+precip_delay <- flights %>%
+  inner_join(weather, by = c("year","month","day","hour","origin"), suffix = c("_flights", "_weather")) %>% #uniendo tablas
+  group_by(precip) %>% #agrupando por columna precip
+  summarize(delay = mean(dep_delay,na.rm =TRUE)) %>% #calculando la media de retraso
+  replace_na(list(delay=0)) #reasignando valor a datos NA
+```
+
+#Data Manipulation 2.5
+```{r}
+ggplot(precip_delay, aes(x = precip,y = delay)) +
+  geom_point()
+```
+
+#Data Manipulation 2.6
+```{r}
+flights_airports <- flights %>%
+  filter(year == 2013, month == 5, day == 10) %>%
+  group_by(dest) %>%
+  summarize(delay = mean(arr_delay,na.rm=TRUE)) %>%
+  inner_join(airports, by = c("dest" = "faa"))
+
+flights_airports
+```
+
+#Data Manipulation 2.7
+```{r}
+ggplot(flights_airports, aes(x = lon,y = lat, color=delay)) +
+  geom_point()
+```
+
+#Data Manipulation 2.8
+```{r}
+flights %>%
+  inner_join(planes, by = "tailnum", suffix = c("_flights", "_planes")) %>%
+  transmute(tailnum,manufacturer,pi = (dep_delay + arr_delay)/air_time)
+```
+
+
+
+
+
+
+
+
+
+
+
